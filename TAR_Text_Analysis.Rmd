@@ -2,12 +2,12 @@
 title: "TAR Course Analysis"
 author: "Ryan Christensen"
 output:
-  html_document:
-    toc: yes
-    toc_float: true
-    theme: "cosmo"
   pdf_document:
     toc: yes
+  html_document:
+    theme: cosmo
+    toc: yes
+    toc_float: yes
 ---
 
 ##Loading the packages and building the url  
