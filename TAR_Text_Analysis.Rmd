@@ -2,11 +2,15 @@
 title: "TAR Course Analysis"
 author: "Ryan Christensen"
 output:
+  html_document:
+    toc: yes
+    toc_float: true
+    theme: "cosmo"
   pdf_document:
     toc: yes
 ---
 
-##Loading the packages and building the url
+##Loading the packages and building the url  
 ```{r collapse=TRUE, message=FALSE}
 library(rvest)
 library(tidytext)
@@ -29,7 +33,8 @@ target <- map(1:17, function(i) {
   }
 })
 ```
-## Scraping the data
+## *Borrowing* some data  
+Utilizing purrr's `map` function I am able to loop over my `target` list and plug each element into rvest's `read_html()` function. This returns a list of pages that I can then loop over again to get a list of the text elements I'm after.  
 ```{r}
 texts <- map(target, read_html)
 
@@ -37,8 +42,8 @@ text_list <- map(texts, function(i) {
   (html_text(html_nodes(i, ".entry")))
 })
 ```
-## Chucking that "borrowed" data into a data_frame  
-Tokenizing the text puts it into a Tidy format of one term per row. This makes removing standard stop words easy with an `anti-join`  
+## Converting *borrowed* data from a list to a Data_Frame  
+Tokenizing the text -- using the Tidy Text method `unnest_tokens()` -- arranges the data into a Tidy format of one term per row. This makes removing standard stop words easy with an `anti-join`.    
 ```{r}
 text_df <- data_frame(text = unlist(text_list), Article = 1:17)
 
@@ -83,15 +88,17 @@ article_words <- left_join(article_words, total_words)
 article_words
 ```
 ```{r message=FALSE, warning=FALSE}
-ggplot(article_words, aes(n/total, fill = Article)) +
-  geom_histogram(show.legend = FALSE) +
+ggplot(article_words, aes(n/total)) +
+  geom_histogram(fill = "navy", show.legend = FALSE) +
   facet_wrap(~Article, ncol = 4, scales = "free_y") +
-  xlim(NA, 0.04)
+  xlim(NA, 0.04) +
+  theme(panel.background = element_blank())
 
 article_words <- article_words %>% 
   bind_tf_idf(word, Article, n)
 ```
-
+## Stop Words  
+Creating a list of custom stop words requires nothing more than a column in a data frame. Here I'm choosing to pull out some random numbers and the `_____` that were used to break sections of each article. 
 ```{r}
 myStopWords <- data_frame(word = c("_____", "193", "502", "d", "95", "2.5", "2006", "california", "ralph’s"))
 ```
@@ -118,15 +125,5 @@ plot_article %>%
         text = element_text(family = "mono", color = "navy"),
         axis.ticks = element_blank())
 
-plot_article %>% 
-  group_by(Article) %>% 
-  top_n(5) %>% 
-  ungroup() %>% 
-  ggplot(aes(word, tf_idf, fill = factor(Article))) +
-    geom_col(show.legend = FALSE) +
-    facet_wrap(~Article, ncol = 5, scales = "free") +
-    coord_flip() +
-    theme(panel.background = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks = element_blank())
+
 ```
