@@ -1,10 +1,14 @@
-library(rvest)
 library(tidytext)
 library(tidyverse)
 library(stringr)
+library(rvest)
 library(tm)
 library(topicmodels)
+library(widyr)
 library(wordcloud)
+library(ggraph)
+library(igraph)
+
 
 urlBase <- sprintf("https://e-discoveryteam.com/tar-course/tar-course-")
 
@@ -108,3 +112,14 @@ plot_article %>%
           axis.text.x = element_blank(),
           axis.ticks = element_blank())
 
+text_pairs <- text_df %>% 
+  pairwise_count(word, Article, sort = TRUE)
+  
+set.seed(34)
+
+text_pairs %>% 
+  filter(n >= 5) %>% 
+  graph_from_data_frame() %>% 
+  ggraph(layout = "fr") + 
+    geom_edge_link(aes(edge_alpha = n, edge_width = n))
+  
